@@ -1,29 +1,28 @@
 package jm.task.core.jdbc.model;
 
 import javax.persistence.*;
-/*
- аннотации JPA
- @Entity - Указывает, что класс является сущностью,позволяет Java-объектам вашего класса быть связанными с БД.
- @Table - Задает первичную таблицу для аннотированной сущности.
- @id - Определяет первичный ключ сущности.
- @GeneratedValue - Обеспечивает спецификацию стратегий генерации значений первичных ключей.
- @column - Указывает сопоставленный столбец для постоянного свойства или поля.
-*/
+
+
 @Entity
+
 @Table(name = "users")
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)//саморазвитие первичного ключа. Когда база данных вставляет данные, она автоматически присваивает значение первичному ключу
-
+    @Column(name = "id")
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Column
+
+    @Column(name = "name")
     private String name;
-    @Column
+
+    @Column(name = "lastname")
     private String lastName;
-    @Column
+
+    @Column(name = "age")
     private Byte age;
 
     public User() {
+
     }
 
     public User(String name, String lastName, Byte age) {
@@ -31,7 +30,6 @@ public class User {
         this.lastName = lastName;
         this.age = age;
     }
-
 
     public Long getId() {
         return id;
@@ -63,15 +61,5 @@ public class User {
 
     public void setAge(Byte age) {
         this.age = age;
-    }
-
-    @Override
-    public String toString() {
-        return "User{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", lastName='" + lastName + '\'' +
-                ", age=" + age +
-                '}';
     }
 }

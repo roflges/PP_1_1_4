@@ -1,20 +1,35 @@
 package jm.task.core.jdbc;
 
-import jm.task.core.jdbc.service.UserService;
-import jm.task.core.jdbc.service.UserServiceImpl;
+import jm.task.core.jdbc.dao.UserDao;
+import jm.task.core.jdbc.dao.UserDaoHibernateImpl;
+import jm.task.core.jdbc.dao.UserDaoJDBCImpl;
+import jm.task.core.jdbc.model.User;
+import jm.task.core.jdbc.util.Util;
+
+
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.cfg.Configuration;
+import java.sql.SQLException;
 
 public class Main {
-    public static void main(String[] args) {
-        UserService userService = new UserServiceImpl();
-        userService.createUsersTable();
-        userService.saveUser("Евгений", "Севостьянов", (byte) 28);
-        userService.saveUser("Иван", "Петров", (byte) 31);
-        userService.saveUser("Сергей", "Смирнов", (byte) 24);
-        userService.saveUser("Владислав", "Иванов", (byte) 22);
-        userService.removeUserById(1);
-        userService.getAllUsers();
-        userService.cleanUsersTable();
-        userService.dropUsersTable();
+    public static void main(String[] args) throws SQLException {
+        // реализуйте алгоритм здесь
+        UserDao userDao = new UserDaoHibernateImpl();
+
+        userDao.createUsersTable();
+
+
+        userDao.saveUser("Lyalya", "Kata", (byte) 5);
+        userDao.saveUser("Po", "Kata", (byte) 6);
+        userDao.saveUser("Tinky", "Kata", (byte) 8);
+        userDao.saveUser("Winky", "kata", (byte) 7);
+
+        userDao.removeUserById(1);
+        System.out.println(userDao.getAllUsers());
+        userDao.cleanUsersTable();
+        userDao.dropUsersTable();
+
+        Configuration configuration = new Configuration().addAnnotatedClass(User.class);
     }
 }
-

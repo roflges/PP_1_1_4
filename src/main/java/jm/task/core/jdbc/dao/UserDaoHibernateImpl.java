@@ -1,19 +1,19 @@
-//DAO (data access object) — один из наиболее распространенных паттернов проектирования, "Доступ к данным". Его смысл прост — создать в приложении слой, который отвечает только за доступ к данным
-
 package jm.task.core.jdbc.dao;
 
 import jm.task.core.jdbc.model.User;
-import jm.task.core.jdbc.util.Util;
-import org.hibernate.HibernateException;
-import org.hibernate.Session;//Интерфейс org.hibernate.Session является мостом между приложением и Hibernate
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.cfg.Configuration;
 
-import javax.transaction.Transactional;
+import java.util.ArrayList;
 import java.util.List;
 
-@Transactional //Указывает, что свойство или поле не являются постоянными.
 public class UserDaoHibernateImpl implements UserDao {
 
-    private final Session session = Util.getSessionFactory().openSession();//соединение с бд, рабоатет с объектами
+    Configuration configuration = new Configuration().addAnnotatedClass(User.class);
+
+    SessionFactory sessionFactory = configuration.buildSessionFactory();
+    Session session = sessionFactory.getCurrentSession();
 
     public UserDaoHibernateImpl() {
 
@@ -22,82 +22,83 @@ public class UserDaoHibernateImpl implements UserDao {
 
     @Override
     public void createUsersTable() {
-
-        try {
-            session.beginTransaction();//проверит, есть ли уже существующая транзакция, если да, то не создаст новую транзакцию
-            session.createSQLQuery("CREATE TABLE IF NOT EXISTS users (`id` INT NOT NULL AUTO_INCREMENT," +
-                    "`name` VARCHAR(45) NULL,`lastName` VARCHAR(45)" +
-                    " NULL,`age` VARCHAR(45) NULL, PRIMARY KEY (`id`)," +
-                    "UNIQUE INDEX `id_UNIQUE` (`id` ASC) VISIBLE)").executeUpdate();//транзакция.фиксация();
-            session.getTransaction().commit();//возвращаемый результат;
-        } catch (HibernateException e) {
-            e.getStackTrace();
-            session.close();
+        try (Session session = sessionFactory.getCurrentSession()) {
+            String sql = """
+                        CREATE TABLE IF NOT EXISTS users (
+                            id INT AUTO_INCREMENT NOT NULL, 
+                            name VARCHAR(45) NOT NULL, 
+                            lastname VARCHAR(45) NOT NULL, 
+                            age INTEGER NOT NULL, PRIMARY KEY(id)) 
+                    """;
+            session.beginTransaction();
+            session.createNativeQuery(sql);
+            session.getTransaction().commit();
+        } catch (Exception e) {
+            session.getTransaction().rollback();
+            e.printStackTrace();
         }
     }
 
     @Override
     public void dropUsersTable() {
-
-
-        try {
+        try (Session session = sessionFactory.getCurrentSession()) {
             session.beginTransaction();
-            session.createSQLQuery("DROP TABLE IF EXISTS users;").executeUpdate();
+            session.createNativeQuery("DROP TABLE IF EXISTS users");
             session.getTransaction().commit();
-        } catch (HibernateException e) {
-            e.getStackTrace();
-            session.close();
+        } catch (Exception e) {
+            session.getTransaction().rollback();
+            e.printStackTrace();
         }
+
     }
 
     @Override
     public void saveUser(String name, String lastName, byte age) {
-        try {
+        try (Session session = sessionFactory.getCurrentSession()) {
             session.beginTransaction();
-            session.save(new User(name, lastName, age));//создать
+            session.save(new User(name, lastName, age));
             session.getTransaction().commit();
-        } catch (HibernateException e) {
-            e.getStackTrace();
-            session.close();
+        } catch (Exception e) {
+            session.getTransaction().rollback();
+            e.printStackTrace();
         }
     }
 
     @Override
     public void removeUserById(long id) {
-        try {
+        try (Session session = sessionFactory.getCurrentSession()) {
             session.beginTransaction();
-            session.delete(session.get(User.class,id));//удалить
-            session.createQuery("DELETE User WHERE id = :id");
+            session.createQuery("DELETE User where id = :id")
+                    .setParameter("id", id).executeUpdate();
             session.getTransaction().commit();
-        } catch (HibernateException e) {
-            e.getStackTrace();
-            session.close();
+        } catch (Exception e) {
+            session.getTransaction().rollback();
+            e.printStackTrace();
         }
+
     }
 
     @Override
     public List<User> getAllUsers() {
-        List users = null;
+        List<User> userList = new ArrayList<>();
 
-        try {
-            users = session.createQuery("FROM User").list();
-        } catch (HibernateException e) {
-            e.getStackTrace();
-            session.close();
+        try (Session session = sessionFactory.openSession()) {
+            userList = session.createQuery("FROM User ORDER BY name").list();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-
-        return users;
+        return userList;
     }
 
     @Override
     public void cleanUsersTable() {
-        try {
+        try (Session session = sessionFactory.getCurrentSession()) {
             session.beginTransaction();
-            session.createQuery("delete User").executeUpdate();
+            session.createQuery("DELETE User").executeUpdate();
             session.getTransaction().commit();
-        } catch (HibernateException e) {
-            e.getStackTrace();
-            session.close();
+        } catch (Exception e) {
+            session.getTransaction().rollback();
+            e.printStackTrace();
         }
     }
 }
